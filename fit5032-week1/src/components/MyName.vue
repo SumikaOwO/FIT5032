@@ -2,6 +2,7 @@
   <div class="my-name">
     <h1>Welcome to my website</h1>
     <p>My name is <strong>{{ name }}</strong></p>
+    <a :href="githubUrl" target="_blank" rel="noopener noreferrer">{{ githubUrl }}</a>
   </div>
 </template>
 
@@ -10,7 +11,8 @@ export default {
   name: "MyName",
   data() {
     return {
-      name: "Yuanhao Li"
+      name: "Yuanhao Li",
+      githubUrl: "https://github.com/SumikaOwO"
     };
   }
 };
@@ -22,4 +24,3 @@ export default {
   margin-top: 50px;
 }
 </style>
-
