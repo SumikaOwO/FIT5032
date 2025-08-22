@@ -98,7 +98,7 @@ const submitForm = () => {
   validateReason(true)
   if (!errors.value.username && !errors.value.password && !errors.value.resident && !errors.value.gender && !errors.value.reason){
         submittedCards.value.push({...formData.value});
-        // clearForm();
+        clearForm();
   }
 };
 
