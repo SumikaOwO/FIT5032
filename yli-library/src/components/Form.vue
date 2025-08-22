@@ -25,22 +25,35 @@
           <div class="row mb-3">
             <div class="col-md-6 col-sm-6">
               <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="isAustralian" v-model="formData.isAustralian" />
+                <input type="checkbox" class="form-check-input" id="isAustralian" 
+                @blur="() => validateGender(true)"
+                v-model="formData.isAustralian" />
+                <div v-if="errors.resident" class="text-danger">{{ errors.resident }}</div>
                 <label class="form-check-label" for="isAustralian">Australian Resident?</label>
               </div>
             </div>
             <div class="col-md-6 col-sm-6">
               <label for="gender" class="form-label">Gender</label>
-              <select class="form-select" id="gender" v-model="formData.gender">
+              <select class="form-select" id="gender" 
+              @blur="() => validateGender(true)" 
+              @change="() => validateGender(false)"
+              v-model="formData.gender">
+                <option disabled value="">Select your gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
               </select>
+              <div v-if="errors.gender" class="text-danger">{{ errors.gender }}</div>
             </div>
           </div>
           <div class="mb-3">
             <label for="reason" class="form-label">Reason for joining</label>
-            <textarea class="form-control" id="reason" rows="3" v-model="formData.reason"></textarea>
+            <textarea class="form-control" id="reason" rows="3" 
+            @blur="() => validateReason(true)" 
+            @input="() => validateReason(false)"
+            v-model="formData.reason">
+          </textarea>
+          <div v-if="errors.reason" class="text-danger">{{ errors.reason }}</div>
           </div>
           <div class="text-center">
             <button type="submit" class="btn btn-primary me-2">Submit</button>
@@ -50,29 +63,22 @@
       </div>
     </div>
   </div>
-  
-  <div class="row mt-5" v-if="submittedCards.length">
-   <div class="d-flex flex-wrap justify-content-start">
-      <div v-for="(card, index) in submittedCards" :key="index" class="card m-2" style="width: 18rem;">
-         <div class="card-header">
-            User Information
-         </div>
-         <ul class="list-group list-group-flush">
-            <li class="list-group-item">Username: {{ card.username }}</li>
-            <li class="list-group-item">Password: {{ card.password }}</li>
-            <li class="list-group-item">Australian Resident: {{ card.isAustralian ? 'Yes' : 'No' }}</li>
-            <li class="list-group-item">Gender: {{ card.gender }}</li>
-            <li class="list-group-item">Reason: {{ card.reason }}</li>
-         </ul>
-      </div>
-   </div>
-</div>
+  <DataTable :value="submittedCards" tableStyle="min-width: 50rem" class="mt-5">
+    <template #empty>No user Information yet.</template>
+    <Column field="username" header="Username"></Column>
+    <Column field="password" header="Password"></Column>
+    <Column field="isAustralian" header="Australian Resident"></Column>
+    <Column field="gender" header="Gender"></Column>
+    <Column field="reason" header="Reason"></Column>
+</DataTable>
 </template>
 
 
 <script setup>
 // Our logic will go here
 import { ref } from 'vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column'
   
 const formData = ref({
     username: '',
@@ -86,10 +92,13 @@ const submittedCards = ref([]);
 
 const submitForm = () => {
   validateName(true);
-  validatePassword(true)
-  if (!errors.value.username && !errors.value.password){
+  validatePassword(true);
+  validateResident(true);
+  validateGender(true);
+  validateReason(true)
+  if (!errors.value.username && !errors.value.password && !errors.value.resident && !errors.value.gender && !errors.value.reason){
         submittedCards.value.push({...formData.value});
-        clearForm;
+        // clearForm();
   }
 };
 
@@ -141,8 +150,32 @@ const validatePassword = (blur) => {
   } else {
     errors.value.password = null;
   }
-};
+}
 
+const validateResident = (blur) => {
+  if (!formData.value.isAustralian) {
+    if (blur) errors.value.resident = "Just pretend you are Australian Resident, tick it!";
+  } else {
+    errors.value.resident = null;
+  }
+}
+
+const validateGender = (blur) => {
+  if (!formData.value.gender) {
+    if (blur) errors.value.gender = "Please select your gender";
+  } else {
+    errors.value.gender = null;
+  }
+}
+
+const validateReason = (blur) => {
+  const reason = (formData.value.reason || '').trim();
+  if (reason.length < 10) {
+    if (blur) errors.value.reason = "I need a reason for not less than 10 letters";
+  } else {
+    errors.value.reason = null;
+  }
+}
 </script>
 
 <style scoped>
