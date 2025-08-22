@@ -82,6 +82,15 @@ const submitForm = () => {
     });
 };
 
+const clearForm = () => {
+  formData.value = {
+    username: '',
+    password: '',
+    isAustralian: false,
+    reason: '',
+    gender: ''
+  }
+}
 </script>
 
 <style scoped>
