@@ -27,7 +27,7 @@
             </div>
 
             <div class="col-md-6 col-sm-6">
-              <label for="age" class="form-label">Age (years)</label>
+              <label for="age" class="form-label">Age</label>
               <div class="input-wrap position-relative">
                 <input
                   id="age"
