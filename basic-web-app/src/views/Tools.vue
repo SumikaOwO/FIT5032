@@ -5,7 +5,7 @@ const tools = [
     title: 'Daily Calorie Calculator',
     desc: 'Estimate BMR and daily maintenance calories.',
     route: '/calculator',
-    img: '/tools/calorie.jpg',
+    // img: '/tools/calorie.jpg',
     alt: 'Calorie calculator illustration'
   }
 ]
@@ -15,7 +15,7 @@ const tools = [
   <section>
     <header class="mb-4">
       <h1 class="mb-1">Tools</h1>
-      <p class="text-muted">Quick calculators and helpers for everyday nutrition decisions.</p>
+      <p class="text-muted">Quick calculator for everyday calorie income.</p>
     </header>
 
     <div class="row g-3">

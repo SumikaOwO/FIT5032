@@ -121,6 +121,35 @@
             <p class="mb-1"><strong>TDEE (maintenance):</strong> {{ Math.round(result.tdee) }} kcal/day</p>
           </div>
         </div>
+
+        <div v-if="history.length" class="mt-4 card">
+          <div class="card-body">
+            <h5 class="card-title">History</h5>
+            <ul class="list-group">
+              <li
+                v-for="item in history"
+                :key="item.id"
+                class="list-group-item"
+              >
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="fw-semibold">
+                      Sex: {{ item.sex }}, Age: {{ item.age }}, Height: {{ item.height }} cm, Weight: {{ item.weight }} kg
+                    </div>
+                    <div class="small">
+                      Activity: {{ item.activityLabel }}
+                    </div>
+                    <div class="small text-muted">
+                      BMR: {{ item.bmr }} kcal, TDEE: {{ item.tdee }} kcal
+                    </div>
+                  </div>
+                  <button class="btn btn-outline-danger btn-sm ms-3" @click="deleteHistory(item.id)" aria-label="Delete this record">Delete</button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -157,6 +186,7 @@ const touched = ref({
 
 const result = ref(null)
 const hasCalculated = ref(false)
+const history = ref([])
 
 const activityOptions = [
   { value: '1.2',   label: 'Sedentary (1.2) - little or no exercise' },
@@ -251,6 +281,20 @@ const compute = () => {
   return { bmr, tdee }
 }
 
+const getActivityLabel = (value) => {
+  const found = activityOptions.find(o => String(o.value) === String(value))
+  return found ? found.label : value
+}
+
+const saveAll = () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    form: formData.value,
+    result: result.value,
+    hasCalculated: hasCalculated.value,
+    history: history.value
+  }))
+}
+
 const submitForm = () => {
   Object.keys(touched.value).forEach(k => touched.value[k] = true)
   validateSex(); validateAge(); validateHeight(); validateWeight(); validateActivity()
@@ -258,11 +302,23 @@ const submitForm = () => {
   if (!ok) return
   result.value = compute()
   hasCalculated.value = true
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    form: formData.value,
-    result: result.value,
-    hasCalculated: true
-  }))
+  history.value.push({
+    id: Date.now() + Math.random().toString(16).slice(2),
+    sex: formData.value.sex,
+    age: Number(formData.value.age),
+    height: Number(formData.value.height),
+    weight: Number(formData.value.weight),
+    activity: formData.value.activity,
+    activityLabel: getActivityLabel(formData.value.activity),
+    bmr: Math.round(result.value.bmr),
+    tdee: Math.round(result.value.tdee)
+  })
+  saveAll()
+}
+
+const deleteHistory = (id) => {
+  history.value = history.value.filter(x => x.id !== id)
+  saveAll()
 }
 
 const clearForm = () => {
@@ -271,7 +327,7 @@ const clearForm = () => {
   touched.value = { sex: false, age: false, height: false, weight: false, activity: false }
   result.value = null
   hasCalculated.value = false
-  localStorage.removeItem(STORAGE_KEY)
+  saveAll()
 }
 
 onMounted(() => {
@@ -283,6 +339,7 @@ onMounted(() => {
       result.value = saved.result
       hasCalculated.value = true
     }
+    if (Array.isArray(saved?.history)) history.value = saved.history
     Object.keys(touched.value).forEach(k => {
       touched.value[k] = String(formData.value[k] ?? '').trim() !== ''
     })
@@ -305,4 +362,6 @@ onMounted(() => {
 }
 .is-valid { border-color: #198754 !important; }
 .is-invalid { border-color: #dc3545 !important; }
+:deep(.form-control.is-valid),
+:deep(.form-select.is-valid) {background-image: none !important;}
 </style>
