@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "title": "Balanced Diet Basics",
+    "description": "Learn the core principles of a balanced diet, including portion sizes and food groups."
+  },
+  {
+    "id": 2,
+    "title": "Understanding Macronutrients",
+    "description": "Explore proteins, carbohydrates, and fats, and how they contribute to daily energy needs."
+  },
+  {
+    "id": 3,
+    "title": "Hydration and Health",
+    "description": "Discover why water is essential and how much you should drink each day."
+  },
+  {
+    "id": 4,
+    "title": "Healthy Snacking Tips",
+    "description": "Ideas for nutrient-rich snacks that keep you full and energized between meals."
+  },
+  {
+    "id": 5,
+    "title": "Vitamins and Minerals",
+    "description": "An introduction to essential micronutrients and the foods that provide them."
+  }
+]
