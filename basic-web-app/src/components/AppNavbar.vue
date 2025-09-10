@@ -22,6 +22,7 @@
           </li>
 
           <li class="nav-item"><router-link class="nav-link" to="/about">About</router-link></li>
+          <li class="nav-item"><router-link class="nav-link" to="/findRecipe">Resources</router-link></li>
         </ul>
       </div>
     </div>
