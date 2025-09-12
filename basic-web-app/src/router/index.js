@@ -9,7 +9,6 @@ import FindRecipe from '@/views/FindRecipe.vue'
 import Login from '@/views/Login.vue'
 import Register from '@/views/Register.vue'
 import RecipeDetail from '@/views/RecipeDetail.vue'
-import Login from '@/views/Login.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
