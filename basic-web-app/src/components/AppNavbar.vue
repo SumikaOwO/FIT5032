@@ -1,6 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-lg bg-light border-bottom">
-    <div class="container">
+    <div class="container d-flex align-items-center">
+      <router-link v-if="isAdmin" to="/admin" class="btn btn-outline-danger me-3">Admin</router-link>
       <router-link class="navbar-brand" to="/">U Health</router-link>
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
@@ -23,8 +24,22 @@
 
           <li class="nav-item"><router-link class="nav-link" to="/about">About</router-link></li>
           <li class="nav-item"><router-link class="nav-link" to="/findRecipe">Find Recipe</router-link></li>
+          <li class="nav-item"><router-link class="nav-link" to="/login">Login</router-link></li>
         </ul>
       </div>
     </div>
   </nav>
 </template>
+
+<script setup>
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const isAdmin = ref(localStorage.getItem('app:role') === 'admin')
+const updateRole = () => { isAdmin.value = localStorage.getItem('app:role') === 'admin' }
+
+watch(() => route.fullPath, updateRole)
+onMounted(() => { window.addEventListener('storage', updateRole) })
+onUnmounted(() => { window.removeEventListener('storage', updateRole) })
+</script>

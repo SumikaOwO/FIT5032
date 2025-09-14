@@ -16,7 +16,7 @@
                   v-model="formData.sex"
                   :class="inputClass('sex')"
                   @change="onSelectInput('sex')"
-                >
+                  >
                   <option value="" disabled>Select...</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
@@ -149,7 +149,6 @@
             </ul>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -343,7 +342,11 @@ onMounted(() => {
     Object.keys(touched.value).forEach(k => {
       touched.value[k] = String(formData.value[k] ?? '').trim() !== ''
     })
-    validateSex(); validateAge(); validateHeight(); validateWeight(); validateActivity()
+    if (touched.value.sex) validateSex()
+    if (touched.value.age) validateAge()
+    if (touched.value.height) validateHeight()
+    if (touched.value.weight) validateWeight()
+   if (touched.value.activity) validateActivity()
   }
 })
 </script>
