@@ -102,7 +102,7 @@ const inputClass = (f) => ({ 'is-invalid': shouldShowError(f) })
 const goRegister = () => router.push('/register')
 
 const showWelcomeAndGo = (name, dest) => {
-  toastMsg.value = "Welcome, ${name}!"
+  toastMsg.value = `Welcome, ${name}!`
   const goBackSafe = () => {
     if (window.history.length > 1) router.back()
     else router.push({ name: 'Home' })
@@ -156,7 +156,8 @@ const submitForm = async () => {
   } catch (e) {
     const code = e?.code || ''
     if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
-      submitError.value = 'Incorrect email or password.'} 
+      submitError.value = 'Incorrect email or password.'
+    }
   } finally {
     submitting.value = false
   }
