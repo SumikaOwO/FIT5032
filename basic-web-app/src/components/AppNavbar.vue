@@ -24,7 +24,14 @@
 
           <li class="nav-item"><router-link class="nav-link" to="/about">About</router-link></li>
           <li class="nav-item"><router-link class="nav-link" to="/findRecipe">Find Recipe</router-link></li>
-          <li class="nav-item"><router-link class="nav-link" to="/login">Login</router-link></li>
+
+          <li class="nav-item" v-if="!isAuthed">
+            <router-link class="nav-link" :to="{ name: 'Login', query: { redirect: route.fullPath } }">Login</router-link>
+          </li>
+          <li class="nav-item d-flex align-items-center gap-2" v-else>
+            <span class="nav-link disabled" style="opacity:.7; cursor:default;">Hi, {{ username }}</span>
+            <a href="#" class="nav-link text-danger" @click.prevent="onLogout">Log out</a>
+          </li>
         </ul>
       </div>
     </div>
@@ -32,14 +39,38 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
+const router = useRouter()
 const route = useRoute()
-const isAdmin = ref(localStorage.getItem('app:role') === 'admin')
-const updateRole = () => { isAdmin.value = localStorage.getItem('app:role') === 'admin' }
 
-watch(() => route.fullPath, updateRole)
-onMounted(() => { window.addEventListener('storage', updateRole) })
-onUnmounted(() => { window.removeEventListener('storage', updateRole) })
+function readUser() {
+  try { return JSON.parse(localStorage.getItem('currentUser')) || null } catch { return null }
+}
+
+const user = ref(readUser())
+const isAuthed = computed(() => !!user.value)
+const username = computed(() => user.value?.username || '')
+const isAdmin = computed(() => user.value?.role === 'admin' || localStorage.getItem('app:role') === 'admin')
+
+function refresh() { user.value = readUser() }
+
+function onLogout() {
+  localStorage.removeItem('currentUser')
+  localStorage.removeItem('app:role')
+  localStorage.removeItem('app:username')
+  refresh()
+  router.push({ name: 'Home' })
+}
+
+watch(() => route.fullPath, refresh)
+onMounted(() => {
+  window.addEventListener('storage', refresh)
+  window.addEventListener('focus', refresh)
+})
+onUnmounted(() => {
+  window.removeEventListener('storage', refresh)
+  window.removeEventListener('focus', refresh)
+})
 </script>

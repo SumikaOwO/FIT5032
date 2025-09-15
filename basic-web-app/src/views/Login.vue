@@ -13,7 +13,6 @@
                 v-model="formData.email" :class="inputClass('email')"
                 @input="onEmailInput" autocomplete="email"
               />
-              <span v-if="shouldShowValid('email')" class="valid-check">&#10004;</span>
             </div>
             <div v-if="shouldShowError('email')" class="text-danger mt-1">{{ errors.email }}</div>
           </div>
@@ -26,7 +25,6 @@
                 v-model="formData.password" :class="inputClass('password')"
                 @input="onPasswordInput" autocomplete="current-password"
               />
-              <span v-if="shouldShowValid('password')" class="valid-check">&#10004;</span>
             </div>
             <div v-if="shouldShowError('password')" class="text-danger mt-1">{{ errors.password }}</div>
           </div>
@@ -58,13 +56,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/firebase/init'
 import { Toast } from 'bootstrap'
 
 const router = useRouter()
+const route  = useRoute()
 
 const formData = ref({ email: '', password: '' })
 const errors = ref({ email: null, password: null })
@@ -98,16 +97,20 @@ const onEmailInput = () => { touched.value.email = true; validateEmail() }
 const onPasswordInput = () => { touched.value.password = true; validatePassword() }
 
 const shouldShowError = (f) => touched.value[f] && !!errors.value[f]
-const shouldShowValid = (f) => touched.value[f] && !errors.value[f] && String(formData.value[f]).trim() !== ''
-const inputClass = (f) => ({ 'is-invalid': shouldShowError(f), 'is-valid': shouldShowValid(f) })
+const inputClass = (f) => ({ 'is-invalid': shouldShowError(f) })
 
 const goRegister = () => router.push('/register')
 
 const showWelcomeAndGo = (name, dest) => {
-  toastMsg.value = `Welcome, ${name}!`
+  toastMsg.value = "Welcome, ${name}!"
+  const goBackSafe = () => {
+    if (window.history.length > 1) router.back()
+    else router.push({ name: 'Home' })
+  }
   const handler = () => {
     toastRef.value.removeEventListener('hidden.bs.toast', handler)
-    router.push(dest)
+    if (dest === 'back') goBackSafe()
+    else router.push(dest)
   }
   toastRef.value.addEventListener('hidden.bs.toast', handler)
   toastInst.show()
@@ -121,7 +124,11 @@ const submitForm = async () => {
   submitError.value = ''
   submitting.value = true
   try {
-    const cred = await signInWithEmailAndPassword(auth, formData.value.email.trim(), formData.value.password)
+    const cred = await signInWithEmailAndPassword(
+      auth,
+      formData.value.email.trim(),
+      formData.value.password
+    )
 
     let roleText = 'user'
     let display = cred.user.displayName || ''
@@ -137,17 +144,19 @@ const submitForm = async () => {
     localStorage.setItem('app:role', roleText)
     if (display) localStorage.setItem('app:username', display)
 
-    const dest = roleText === 'admin' ? '/admin' : '/findrecipe'
+    const userObj = { id: cred.user.uid, username: display || 'User', role: roleText }
+    localStorage.setItem('currentUser', JSON.stringify(userObj))
+
+    const hasRedirect = typeof route.query.redirect === 'string' && route.query.redirect
+    const dest = roleText === 'admin'
+      ? { name: 'Admin' }
+      : (hasRedirect ? route.query.redirect : 'back')
+
     showWelcomeAndGo(display || 'User', dest)
   } catch (e) {
     const code = e?.code || ''
     if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
-      submitError.value = 'Incorrect email or password.'
-    } else if (code === 'auth/user-not-found') {
-      submitError.value = 'No account found with this email.'
-    } else {
-      submitError.value = 'Sign in failed. Please try again.'
-    }
+      submitError.value = 'Incorrect email or password.'} 
   } finally {
     submitting.value = false
   }
@@ -156,8 +165,5 @@ const submitForm = async () => {
 
 <style scoped>
 .input-wrap { position: relative; }
-.valid-check { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-weight: 700; line-height: 1; pointer-events: none; color: #198754; }
-.is-valid { border-color: #198754 !important; }
 .is-invalid { border-color: #dc3545 !important; }
-:deep(.form-control.is-valid) { background-image: none !important; }
 </style>

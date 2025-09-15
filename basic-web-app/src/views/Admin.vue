@@ -1,8 +1,8 @@
 <template>
   <section class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
     <div class="text-center">
-      <h2>Page Under Construction</h2>
-      <p class="text-muted">This About page is still being developed. Please check back later!</p>
+      <h2>What you can do as admin?</h2>
+      <p class="text-muted">- Check if the user comments on the recipe are normal. Remove all advertisements and discriminatory language.</p>
     </div>
   </section>
 </template>
