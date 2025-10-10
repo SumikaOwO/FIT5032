@@ -1,0 +1,32 @@
+[
+  {
+    "id": "r1",
+    "title": "Avocado Toast",
+    "image": "",
+    "tags": ["breakfast", "vegetarian"],
+    "ingredients": [
+      "2 slices of bread",
+      "1 ripe avocado",
+      "Salt, pepper, lemon juice"
+    ],
+    "steps": [
+      "Toast the bread.",
+      "Mash avocado with salt, pepper, lemon.",
+      "Spread on toast and serve."
+    ],
+    "nutrition": { "calories": 250, "protein": 6 }
+  },
+  {
+    "id": "r2",
+    "title": "Chicken Stir Fry",
+    "image": "",
+    "tags": ["dinner", "quick"],
+    "ingredients": ["200g chicken", "Mixed veggies", "Soy sauce, garlic, oil"],
+    "steps": [
+      "Slice chicken and veggies.",
+      "Stir-fry chicken then add veggies.",
+      "Season with soy sauce and serve."
+    ],
+    "nutrition": { "calories": 420, "protein": 32 }
+  }
+]

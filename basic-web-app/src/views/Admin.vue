@@ -1,8 +1,8 @@
 <template>
   <section class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
     <div class="text-center">
-      <h2>Welcome to U Health</h2>
-      <p class="text-muted">Let me help you to build a balance diet</p>
+      <h2>What you can do as admin?</h2>
+      <p class="text-muted">- Check if the user comments on the recipe are normal. Remove all advertisements and discriminatory language.</p>
     </div>
   </section>
 </template>
