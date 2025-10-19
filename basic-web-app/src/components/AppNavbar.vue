@@ -14,21 +14,7 @@
           <li class="nav-item"><router-link class="nav-link" to="/">Home</router-link></li>
           <li class="nav-item"><router-link class="nav-link" to="/resources">Resources</router-link></li>
 
-          <li class="nav-item dropdown">
-            <a
-              class="nav-link dropdown-toggle"
-              href="#"
-              id="toolsDropdown"
-              role="button"
-              ref="toolsToggle"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >Tools</a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="toolsDropdown">
-              <li><router-link class="dropdown-item" to="/tools">All Tools</router-link></li>
-              <li><router-link class="dropdown-item" to="/calculator">Daily Calorie Calculator</router-link></li>
-            </ul>
-          </li>
+          <li class="nav-item"><router-link class="nav-link" to="/tools">Tools</router-link></li>
 
           <li class="nav-item"><router-link class="nav-link" to="/about">About</router-link></li>
           <li class="nav-item"><router-link class="nav-link" to="/findRecipe">Find Recipe</router-link></li>
@@ -47,14 +33,12 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth.js'
-import { Dropdown } from 'bootstrap'
 
 const router = useRouter()
 const route = useRoute()
-const toolsToggle = ref(null)
 const { isAuthed, username, isAdmin, refreshFromStorage, signOutUser } = useAuth()
 
 async function onLogout() {
@@ -62,14 +46,11 @@ async function onLogout() {
   router.push({ name: 'Home' })
 }
 
-watch(() => route.fullPath, async () => {
+watch(() => route.fullPath, () => {
   refreshFromStorage()
-  await nextTick()
-  if (toolsToggle.value) Dropdown.getOrCreateInstance(toolsToggle.value)
 })
 
-onMounted(async () => {
-  if (toolsToggle.value) Dropdown.getOrCreateInstance(toolsToggle.value)
+onMounted(() => {
   window.addEventListener('storage', refreshFromStorage)
   window.addEventListener('focus', refreshFromStorage)
 })
