@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
 import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { getFunctions } from 'firebase/functions'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,5 +18,6 @@ const auth = getAuth(app)
 setPersistence(auth, browserLocalPersistence)
 
 const db = getFirestore(app)
+const functions = getFunctions(app, 'australia-southeast2')
 
-export { app, auth, db }
+export { app, auth, db, functions }
