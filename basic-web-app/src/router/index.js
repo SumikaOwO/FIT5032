@@ -9,6 +9,7 @@ import FindRecipe from '@/views/FindRecipe.vue'
 import Login from '@/views/Login.vue'
 import Register from '@/views/Register.vue'
 import RecipeDetail from '@/views/RecipeDetail.vue'
+import ResetPassword from '@/views/ResetPassword.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -20,6 +21,7 @@ const routes = [
   { path: '/register', name: 'Register', component: Register },
   { path: '/findRecipe', name: 'FindRecipe', component: FindRecipe },
   { path: '/findRecipe/:id', name: 'RecipeDetail', component: RecipeDetail },
+  { path: '/reset-password', name: 'ResetPassword', component: ResetPassword },
   { path: '/admin', name: 'Admin', component: Admin },
 ]
 

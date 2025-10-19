@@ -9,9 +9,13 @@
             <label for="email" class="form-label">Email</label>
             <div class="input-wrap position-relative">
               <input
-                id="email" type="email" class="form-control"
-                v-model="formData.email" :class="inputClass('email')"
-                @input="onEmailInput" autocomplete="email"
+                id="email"
+                type="email"
+                class="form-control"
+                v-model="formData.email"
+                :class="inputClass('email')"
+                @input="onEmailInput"
+                autocomplete="email"
               />
             </div>
             <div v-if="shouldShowError('email')" class="text-danger mt-1">{{ errors.email }}</div>
@@ -21,9 +25,13 @@
             <label for="password" class="form-label">Password</label>
             <div class="input-wrap position-relative">
               <input
-                id="password" type="password" class="form-control"
-                v-model="formData.password" :class="inputClass('password')"
-                @input="onPasswordInput" autocomplete="current-password"
+                id="password"
+                type="password"
+                class="form-control"
+                v-model="formData.password"
+                :class="inputClass('password')"
+                @input="onPasswordInput"
+                autocomplete="current-password"
               />
             </div>
             <div v-if="shouldShowError('password')" class="text-danger mt-1">{{ errors.password }}</div>
@@ -40,6 +48,38 @@
 
           <div v-if="submitError" class="alert alert-danger mt-3">{{ submitError }}</div>
         </form>
+
+        <div class="mt-4">
+          <button class="btn btn-link p-0" type="button" @click="toggleReset">
+            {{ showReset ? 'Close password reset' : 'Forgot password?' }}
+          </button>
+        </div>
+
+        <div v-if="showReset" class="card mt-3">
+          <div class="card-body">
+            <h5 class="card-title mb-2">Reset password</h5>
+            <p class="text-muted small mb-3">Enter your email address to receive a reset link.</p>
+            <form @submit.prevent="submitResetRequest" novalidate>
+              <div class="mb-3">
+                <label for="reset-email" class="form-label">Email</label>
+                <input
+                  id="reset-email"
+                  type="email"
+                  class="form-control"
+                  v-model="resetEmail"
+                  autocomplete="email"
+                />
+              </div>
+              <button class="btn btn-secondary" type="submit" :disabled="resetSending">
+                {{ resetSending ? 'Sending...' : 'Send Reset Link' }}
+              </button>
+            </form>
+            <div v-if="resetSuccess" class="alert alert-success mt-3">
+              We have sent a reset link to your email. Please follow the instructions to set a new password.
+            </div>
+            <div v-if="resetError" class="alert alert-danger mt-3">{{ resetError }}</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -59,17 +99,25 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
-import { auth, db } from '@/firebase/init'
+import { httpsCallable } from 'firebase/functions'
+import { auth, db, functions } from '@/firebase/init'
+import { useAuth } from '@/composables/useAuth.js'
 import { Toast } from 'bootstrap'
 
 const router = useRouter()
-const route  = useRoute()
+const route = useRoute()
+const { setUserSession } = useAuth()
 
 const formData = ref({ email: '', password: '' })
 const errors = ref({ email: null, password: null })
 const touched = ref({ email: false, password: false })
 const submitting = ref(false)
 const submitError = ref('')
+const showReset = ref(false)
+const resetEmail = ref('')
+const resetSending = ref(false)
+const resetSuccess = ref(false)
+const resetError = ref('')
 
 const toastRef = ref(null)
 const toastMsg = ref('')
@@ -100,6 +148,40 @@ const shouldShowError = (f) => touched.value[f] && !!errors.value[f]
 const inputClass = (f) => ({ 'is-invalid': shouldShowError(f) })
 
 const goRegister = () => router.push('/register')
+const toggleReset = () => {
+  showReset.value = !showReset.value
+  resetError.value = ''
+  resetSuccess.value = false
+  if (showReset.value && !resetEmail.value) {
+    resetEmail.value = formData.value.email.trim()
+  }
+}
+
+const submitResetRequest = async () => {
+  const emailValue = (resetEmail.value || formData.value.email || '').trim()
+  resetError.value = ''
+  resetSuccess.value = false
+  if (!emailValue) {
+    resetError.value = 'Please enter your email.'
+    return
+  }
+  if (!emailRegex.test(emailValue)) {
+    resetError.value = 'Enter a valid email.'
+    return
+  }
+  resetEmail.value = emailValue
+  resetSending.value = true
+  try {
+    const sendReset = httpsCallable(functions, 'sendPasswordResetEmail')
+    await sendReset({ email: emailValue })
+    resetSuccess.value = true
+  } catch (err) {
+    resetError.value = 'Unable to send reset email. Please try again soon.'
+    console.error('reset email failed', err)
+  } finally {
+    resetSending.value = false
+  }
+}
 
 const showWelcomeAndGo = (name, dest) => {
   toastMsg.value = `Welcome, ${name}!`
@@ -141,11 +223,8 @@ const submitForm = async () => {
       }
     } catch {}
 
-    localStorage.setItem('app:role', roleText)
-    if (display) localStorage.setItem('app:username', display)
-
     const userObj = { id: cred.user.uid, username: display || 'User', role: roleText }
-    localStorage.setItem('currentUser', JSON.stringify(userObj))
+    setUserSession(userObj)
 
     const hasRedirect = typeof route.query.redirect === 'string' && route.query.redirect
     const dest = roleText === 'admin'
