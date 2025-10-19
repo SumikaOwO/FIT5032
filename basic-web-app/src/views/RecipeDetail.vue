@@ -9,8 +9,6 @@ const route = useRoute();
 const router = useRouter();
 const recipe = computed(() => recipes.find(r => String(r.id) === String(route.params.id)));
 const stats = computed(() => recipe.value ? getRecipeStats(recipe.value.id) : { average:0, count:0 });
-
-if (!recipe.value) router.replace({ name: "recipes" });
 </script>
 
 <template>
