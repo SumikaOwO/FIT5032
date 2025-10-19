@@ -15,7 +15,15 @@
           <li class="nav-item"><router-link class="nav-link" to="/resources">Resources</router-link></li>
 
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Tools</a>
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              id="toolsDropdown"
+              role="button"
+              ref="toolsToggle"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >Tools</a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="toolsDropdown">
               <li><router-link class="dropdown-item" to="/tools">All Tools</router-link></li>
               <li><router-link class="dropdown-item" to="/calculator">Daily Calorie Calculator</router-link></li>
@@ -39,38 +47,35 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useAuth } from '@/composables/useAuth.js'
+import { Dropdown } from 'bootstrap'
 
 const router = useRouter()
 const route = useRoute()
+const toolsToggle = ref(null)
+const { isAuthed, username, isAdmin, refreshFromStorage, signOutUser } = useAuth()
 
-function readUser() {
-  try { return JSON.parse(localStorage.getItem('currentUser')) || null } catch { return null }
-}
-
-const user = ref(readUser())
-const isAuthed = computed(() => !!user.value)
-const username = computed(() => user.value?.username || '')
-const isAdmin = computed(() => user.value?.role === 'admin' || localStorage.getItem('app:role') === 'admin')
-
-function refresh() { user.value = readUser() }
-
-function onLogout() {
-  localStorage.removeItem('currentUser')
-  localStorage.removeItem('app:role')
-  localStorage.removeItem('app:username')
-  refresh()
+async function onLogout() {
+  await signOutUser()
   router.push({ name: 'Home' })
 }
 
-watch(() => route.fullPath, refresh)
-onMounted(() => {
-  window.addEventListener('storage', refresh)
-  window.addEventListener('focus', refresh)
+watch(() => route.fullPath, async () => {
+  refreshFromStorage()
+  await nextTick()
+  if (toolsToggle.value) Dropdown.getOrCreateInstance(toolsToggle.value)
 })
+
+onMounted(async () => {
+  if (toolsToggle.value) Dropdown.getOrCreateInstance(toolsToggle.value)
+  window.addEventListener('storage', refreshFromStorage)
+  window.addEventListener('focus', refreshFromStorage)
+})
+
 onUnmounted(() => {
-  window.removeEventListener('storage', refresh)
-  window.removeEventListener('focus', refresh)
+  window.removeEventListener('storage', refreshFromStorage)
+  window.removeEventListener('focus', refreshFromStorage)
 })
 </script>
