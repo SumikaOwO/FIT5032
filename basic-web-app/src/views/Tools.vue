@@ -6,6 +6,13 @@ const tools = [
     desc: 'Estimate BMR and daily maintenance calories.',
     route: '/calculator',
     alt: 'Calorie calculator illustration'
+  },
+  {
+    key: 'healthy-places',
+    title: 'Healthy Places Explorer',
+    desc: 'Discover healthy spots nearby and plan your route.',
+    route: '/healthyPlaces',
+    alt: 'Healthy locations map illustration'
   }
 ]
 </script>
