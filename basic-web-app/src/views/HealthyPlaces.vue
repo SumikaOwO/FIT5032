@@ -8,6 +8,51 @@
             {{ mapErrorMessage }}
           </div>
         </div>
+        <div class="route-panel card shadow-sm mt-3">
+          <div class="card-body">
+            <h2 class="h6 mb-3">Route details</h2>
+
+            <div v-if="!hasActiveRoute" class="text-muted small">
+              Select a place and tap "Get route" to display directions here.
+            </div>
+
+            <div v-else class="route-summary">
+              <div class="btn-group mb-3" role="group">
+                <button
+                  v-for="mode in travelModes"
+                  :key="mode"
+                  type="button"
+                  class="btn"
+                  :class="selectedTravelMode === mode ? 'btn-primary' : 'btn-outline-primary'"
+                  :disabled="!routeSummaries[mode]"
+                  @click="selectedTravelMode = mode"
+                >
+                  {{ modeLabels[mode] }}
+                </button>
+              </div>
+
+              <div
+                v-for="entry in routeSummaryEntries"
+                :key="entry.mode"
+                class="route-summary-card border rounded p-3 mb-2"
+                :class="{ 'is-active': selectedTravelMode === entry.mode }"
+              >
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <strong>{{ modeLabels[entry.mode] }}</strong>
+                  <span class="badge bg-light text-dark">
+                    {{ entry.summary.distanceText }}
+                  </span>
+                </div>
+                <div class="small text-secondary mb-1">
+                  Estimated time: {{ entry.summary.durationText }}
+                </div>
+                <div v-if="entry.mode === 'WALKING' && entry.summary.caloriesText" class="small">
+                  Approx. calories burned: {{ entry.summary.caloriesText }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="col-12 col-lg-4">
@@ -17,47 +62,48 @@
               <div class="mb-3">
                 <h2 class="h5 mb-3">Find healthy places</h2>
                 <label class="form-label" for="address-input">Search by address</label>
-                <input
-                  id="address-input"
-                  ref="addressInputRef"
-                  type="text"
-                  class="form-control"
-                  v-model="addressQuery"
-                  placeholder="Enter a location or suburb"
-                />
-                <small class="text-muted d-block mt-2">
-                  Allow location access to centre the map around you. Otherwise, we will start in Melbourne CBD.
-                </small>
-                <button
-                  type="button"
-                  class="btn btn-outline-primary btn-sm mt-2"
-                  :disabled="isRecentering"
-                  @click="moveToUserLocation"
-                >
-                  {{ isRecentering ? 'Locating...' : 'Move to my location' }}
-                </button>
+                <div class="address-row d-flex gap-2 flex-wrap">
+                  <input
+                    id="address-input"
+                    ref="addressInputRef"
+                    type="text"
+                    class="form-control address-input"
+                    v-model="addressQuery"
+                    placeholder="Enter a location or suburb"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm address-button"
+                    :disabled="isRecentering"
+                    @click="moveToUserLocation"
+                  >
+                    {{ isRecentering ? 'Locating...' : 'Move to my location' }}
+                  </button>
+                </div>
               </div>
 
-              <div class="mb-3">
-                <label class="form-label" for="category-select">Category</label>
-                <select
-                  id="category-select"
-                  class="form-select"
-                  v-model="selectedCategoryKey"
-                >
-                  <option v-for="cat in categories" :key="cat.key" :value="cat.key">
-                    {{ cat.label }}
-                  </option>
-                </select>
-              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="category-select">Category</label>
+                  <select
+                    id="category-select"
+                    class="form-select"
+                    v-model="selectedCategoryKey"
+                  >
+                    <option v-for="cat in categories" :key="cat.key" :value="cat.key">
+                      {{ cat.label }}
+                    </option>
+                  </select>
+                </div>
 
-              <div class="mb-3">
-                <label class="form-label" for="sort-select">Sort by</label>
-                <select id="sort-select" class="form-select" v-model="selectedSortKey">
-                  <option v-for="opt in sortOptions" :key="opt.key" :value="opt.key">
-                    {{ opt.label }}
-                  </option>
-                </select>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="sort-select">Sort by</label>
+                  <select id="sort-select" class="form-select" v-model="selectedSortKey">
+                    <option v-for="opt in sortOptions" :key="opt.key" :value="opt.key">
+                      {{ opt.label }}
+                    </option>
+                  </select>
+                </div>
               </div>
 
               <div class="form-check mb-3">
@@ -86,18 +132,29 @@
               <template v-else-if="searchResults.length">
                 <ul class="list-group list-group-flush">
                   <li
-                    v-for="place in searchResults"
+                    v-for="place in paginatedResults"
                     :key="place.id"
                     class="list-group-item result-item"
                     :class="{ active: activePlaceId === place.id }"
                     role="button"
                     @click="focusPlace(place.id)"
                   >
-                    <div class="d-flex justify-content-between">
-                      <h3 class="h6 mb-1">{{ place.name }}</h3>
-                      <span v-if="place.rating" class="badge bg-warning text-dark">
-                        &#9733 {{ place.rating.toFixed(1) }}
-                      </span>
+                    <div class="result-header d-flex align-items-center">
+                      <h3 class="h6 mb-0 flex-grow-1">{{ place.name }}</h3>
+                      <div class="result-actions d-flex align-items-center gap-2 flex-shrink-0">
+                        <button
+                          v-if="activePlaceId === place.id"
+                          type="button"
+                          class="btn btn-sm btn-outline-success get-route-button"
+                          :disabled="isRouteLoading"
+                          @click.stop="startRouteTo(place)"
+                        >
+                          {{ isRouteLoading ? 'Preparing...' : 'Get route' }}
+                        </button>
+                        <span v-if="place.rating" class="badge bg-warning text-dark">
+                          &#9733 {{ place.rating.toFixed(1) }}
+                        </span>
+                      </div>
                     </div>
                     <p class="text-muted mb-1 small">{{ place.address }}</p>
                     <div class="d-flex justify-content-between small text-secondary">
@@ -110,6 +167,30 @@
                     </div>
                   </li>
                 </ul>
+                <div
+                  v-if="totalPages > 1"
+                  class="results-pagination d-flex justify-content-between align-items-center mt-3"
+                >
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    :disabled="currentPage === 1"
+                    @click="goToPreviousPage"
+                  >
+                    &larr; Previous
+                  </button>
+                  <span class="small text-muted">
+                    Page {{ currentPage }} of {{ totalPages }}
+                  </span>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    :disabled="currentPage === totalPages"
+                    @click="goToNextPage"
+                  >
+                    Next &rarr;
+                  </button>
+                </div>
               </template>
               <template v-else>
                 <div class="placeholder text-muted text-center py-4">
@@ -125,7 +206,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 
 const categories = [
   { key: 'park', label: 'Parks', type: 'park' },
@@ -142,6 +223,11 @@ const sortOptions = [
 
 const DEFAULT_CENTER = { lat: -37.8136, lng: 144.9631 }
 const SEARCH_RADIUS_METERS = 4000
+const RESULTS_PER_PAGE = 5
+const WALKING_MET = 3.5
+const AVERAGE_WALK_WEIGHT_KG = 70
+const TRAVEL_MODES = ['DRIVING', 'WALKING']
+const travelModes = TRAVEL_MODES
 
 let googleMapsPromise
 
@@ -157,12 +243,207 @@ const errorMessage = ref('')
 const mapErrorMessage = ref('')
 const searchResults = ref([])
 const activePlaceId = ref(null)
+const currentPage = ref(1)
+const totalPages = computed(() => {
+  if (!searchResults.value.length) return 0
+  return Math.ceil(searchResults.value.length / RESULTS_PER_PAGE)
+})
+const paginatedResults = computed(() => {
+  if (!searchResults.value.length) return []
+  const startIndex = (currentPage.value - 1) * RESULTS_PER_PAGE
+  return searchResults.value.slice(startIndex, startIndex + RESULTS_PER_PAGE)
+})
 const currentCenter = ref({ ...DEFAULT_CENTER })
+const selectedTravelMode = ref('DRIVING')
+const isRouteLoading = ref(false)
+const routeSummaries = reactive({
+  DRIVING: null,
+  WALKING: null
+})
+const routeDestination = ref(null)
+const modeLabels = Object.freeze({
+  DRIVING: 'Driving',
+  WALKING: 'Walking'
+})
+
+const routeResponseStore = reactive({
+  DRIVING: null,
+  WALKING: null
+})
+let routeRequestCounter = 0
+
+const availableModes = computed(() => travelModes.filter((mode) => Boolean(routeSummaries[mode])))
+const hasActiveRoute = computed(() => availableModes.value.length > 0)
+const routeSummaryEntries = computed(() =>
+  availableModes.value.map((mode) => ({
+    mode,
+    summary: routeSummaries[mode]
+  }))
+)
+
+watch(searchResults, () => {
+  currentPage.value = 1
+})
+
+watch(totalPages, (nextTotal) => {
+  if (!nextTotal) {
+    currentPage.value = 1
+    return
+  }
+  if (currentPage.value > nextTotal) {
+    currentPage.value = nextTotal
+  }
+})
+
+watch(selectedTravelMode, (mode) => {
+  if (routeResponseStore[mode]) {
+    renderRoute(mode)
+  }
+})
+
+function goToPreviousPage() {
+  if (currentPage.value > 1) {
+    currentPage.value -= 1
+  }
+}
+
+function goToNextPage() {
+  if (totalPages.value && currentPage.value < totalPages.value) {
+    currentPage.value += 1
+  }
+}
+
+function startRouteTo(place) {
+  if (!place) return
+  focusPlace(place.id)
+  clearRouteVisuals()
+  routeDestination.value = {
+    id: place.id,
+    name: place.name,
+    position: { ...place.position }
+  }
+  calculateAllRoutes()
+}
+
+async function calculateAllRoutes() {
+  if (!routeDestination.value) return
+  if (!directionsService || !window.google?.maps) {
+    return
+  }
+
+  const requestId = ++routeRequestCounter
+  isRouteLoading.value = true
+
+  travelModes.forEach((mode) => {
+    routeSummaries[mode] = null
+    routeResponseStore[mode] = null
+  })
+
+  const origin = new window.google.maps.LatLng(currentCenter.value.lat, currentCenter.value.lng)
+  const destination = new window.google.maps.LatLng(
+    routeDestination.value.position.lat,
+    routeDestination.value.position.lng
+  )
+
+  const results = await Promise.allSettled(
+    travelModes.map((mode) => requestRoute(mode, origin, destination))
+  )
+
+  if (requestId !== routeRequestCounter) {
+    isRouteLoading.value = false
+    return
+  }
+
+  results.forEach((result) => {
+    if (result.status === 'fulfilled') {
+      const { mode, response } = result.value
+      const summary = buildRouteSummary(response, mode)
+      if (summary) {
+        routeResponseStore[mode] = response
+        routeSummaries[mode] = summary
+      }
+    }
+  })
+
+  const available = travelModes.filter((mode) => Boolean(routeSummaries[mode]))
+
+  if (available.length) {
+    if (!available.includes(selectedTravelMode.value)) {
+      selectedTravelMode.value = available[0]
+    } else {
+      renderRoute(selectedTravelMode.value)
+    }
+  } else {
+    routeDestination.value = null
+    clearRouteVisuals()
+  }
+
+  isRouteLoading.value = false
+}
+
+function requestRoute(mode, origin, destination) {
+  return new Promise((resolve, reject) => {
+    const travelMode = window.google.maps.TravelMode?.[mode] || mode
+    directionsService.route(
+      {
+        origin,
+        destination,
+        travelMode
+      },
+      (response, status) => {
+        if (status === 'OK' && response?.routes?.length) {
+          resolve({ mode, response })
+        } else {
+          reject({ mode, status })
+        }
+      }
+    )
+  })
+}
+
+function buildRouteSummary(response, mode) {
+  if (!response?.routes?.length) return null
+  const leg = response.routes[0]?.legs?.[0]
+  if (!leg) return null
+
+  const durationSeconds = leg.duration?.value ?? null
+  let caloriesText = ''
+  if (mode === 'WALKING' && durationSeconds) {
+    const calories = WALKING_MET * AVERAGE_WALK_WEIGHT_KG * (durationSeconds / 3600)
+    caloriesText = `${Math.round(calories)} kcal`
+  }
+
+  return {
+    distanceText: leg.distance?.text || '--',
+    durationText: leg.duration?.text || '--',
+    caloriesText
+  }
+}
+
+function renderRoute(mode) {
+  if (!directionsRenderer || !routeResponseStore[mode]) return
+  directionsRenderer.setDirections(routeResponseStore[mode])
+}
+
+function clearRouteVisuals() {
+  selectedTravelMode.value = 'DRIVING'
+  isRouteLoading.value = false
+  routeRequestCounter += 1
+  travelModes.forEach((mode) => {
+    routeSummaries[mode] = null
+    routeResponseStore[mode] = null
+  })
+  if (directionsRenderer) {
+    directionsRenderer.set('directions', null)
+  }
+}
 
 let mapInstance = null
 let placesService = null
 let autocomplete = null
 let infoWindow = null
+let directionsService = null
+let directionsRenderer = null
 let hasTriggeredInitialSearch = false
 const markerStore = new Map()
 let centerMarker = null
@@ -239,10 +520,18 @@ function updateCenterMarker(position) {
 }
 
 function focusPlace(placeId) {
-  const target = searchResults.value.find((p) => p.id === placeId)
-  if (!target || !mapInstance) return
+  const targetIndex = searchResults.value.findIndex((p) => p.id === placeId)
+  if (targetIndex === -1) return
+
+  const target = searchResults.value[targetIndex]
+  const targetPage = Math.floor(targetIndex / RESULTS_PER_PAGE) + 1
+  if (targetPage !== currentPage.value) {
+    currentPage.value = targetPage
+  }
 
   activePlaceId.value = placeId
+  if (!mapInstance) return
+
   mapInstance.panTo(target.position)
   if (mapInstance.getZoom() < 15) {
     mapInstance.setZoom(15)
@@ -336,6 +625,9 @@ function onApplyFilters() {
     errorMessage.value = 'Unsupported category.'
     return
   }
+
+  routeDestination.value = null
+  clearRouteVisuals()
 
   isLoading.value = true
   errorMessage.value = ''
@@ -442,6 +734,15 @@ function initMap(maps) {
   })
   placesService = new maps.places.PlacesService(mapInstance)
   infoWindow = new maps.InfoWindow()
+  directionsService = new maps.DirectionsService()
+  directionsRenderer = new maps.DirectionsRenderer({
+    map: mapInstance,
+    suppressMarkers: true,
+    polylineOptions: {
+      strokeColor: '#198754',
+      strokeWeight: 5
+    }
+  })
   updateCenterMarker(DEFAULT_CENTER)
   initAutocomplete(maps)
   tryUserGeolocation()
@@ -497,6 +798,11 @@ onUnmounted(() => {
     centerMarker.setMap(null)
     centerMarker = null
   }
+  if (directionsRenderer) {
+    directionsRenderer.setMap(null)
+    directionsRenderer = null
+  }
+  directionsService = null
   mapInstance = null
   placesService = null
   autocomplete = null
@@ -534,9 +840,52 @@ onUnmounted(() => {
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
+.result-item h3 {
+  color: #1f2937;
+}
 .result-item.active,
 .result-item:hover {
   background-color: #e8f5e9;
+  color: inherit;
+  border-color: #cdeadc;
+}
+.result-item.active h3,
+.result-item.active p,
+.result-item.active span {
+  color: inherit;
+}
+.result-header {
+  display: flex;
+  align-items: center;
+}
+.result-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.get-route-button {
+  white-space: nowrap;
+}
+.address-row {
+  width: 100%;
+  align-items: center;
+}
+.address-input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.address-button {
+  flex: 0 0 auto;
+}
+.results-pagination button {
+  min-width: 110px;
+}
+.route-summary-card {
+  background-color: #f8fafc;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.route-summary-card.is-active {
+  border-color: #198754;
+  box-shadow: 0 0 0 0.1rem rgba(25, 135, 84, 0.25);
 }
 </style>
-
