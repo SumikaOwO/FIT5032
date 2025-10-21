@@ -48,6 +48,25 @@
                   </option>
                 </select>
               </template>
+              <template v-else-if="col.filterType === 'daterange'">
+                <div class="date-range-filter">
+                  <input
+                    type="date"
+                    class="form-control form-control-sm"
+                    v-model="columnFilters[col.key].start"
+                    @change="onFiltersChanged"
+                    :aria-label="`${col.label} start date`"
+                  />
+                  <span class="date-range-separator">-</span>
+                  <input
+                    type="date"
+                    class="form-control form-control-sm"
+                    v-model="columnFilters[col.key].end"
+                    @change="onFiltersChanged"
+                    :aria-label="`${col.label} end date`"
+                  />
+                </div>
+              </template>
               <template v-else-if="col.searchable">
                 <input
                   type="text"
@@ -178,12 +197,21 @@ const sortState = reactive({
 const currentPage = ref(1)
 
 const hasColumnFilters = computed(() =>
-  columnsRef.value.some((col) => col.searchable || col.filterType === 'select')
+  columnsRef.value.some(
+    (col) => col.searchable || col.filterType === 'select' || col.filterType === 'daterange'
+  )
 )
 
 watchEffect(() => {
   columnsRef.value.forEach((col) => {
     if (columnFilters[col.key] === undefined) {
+      columnFilters[col.key] =
+        col.filterType === 'daterange'
+          ? reactive({ start: '', end: '' })
+          : ''
+    } else if (col.filterType === 'daterange' && typeof columnFilters[col.key] !== 'object') {
+      columnFilters[col.key] = reactive({ start: '', end: '' })
+    } else if (col.filterType !== 'daterange' && typeof columnFilters[col.key] === 'object') {
       columnFilters[col.key] = ''
     }
   })
@@ -196,6 +224,19 @@ const filteredRows = computed(() => {
   return rowsRef.value.filter((row) => {
     return cols.every((col) => {
       const filterValue = filters[col.key]
+      if (col.filterType === 'daterange') {
+        const start = filterValue?.start
+        const end = filterValue?.end
+        if (!start && !end) return true
+        const cellValue = getFilterValue(col, row)
+        const timestamp = normalizeDateFilterValue(cellValue)
+        if (timestamp === null) return false
+        const startTime = start ? normalizeDateInput(start, 'start') : null
+        const endTime = end ? normalizeDateInput(end, 'end') : null
+        if (startTime !== null && timestamp < startTime) return false
+        if (endTime !== null && timestamp > endTime) return false
+        return true
+      }
       if (!filterValue) return true
       const cellValue = getFilterValue(col, row)
       if (col.filterType === 'select') {
@@ -326,6 +367,29 @@ function getFilterValue(col, row) {
   return row?.[key]
 }
 
+function normalizeDateFilterValue(value) {
+  if (value instanceof Date) return value.getTime()
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') {
+    const numeric = Number(value)
+    if (!Number.isNaN(numeric)) return numeric
+    const parsed = Date.parse(value)
+    return Number.isNaN(parsed) ? null : parsed
+  }
+  return null
+}
+
+function normalizeDateInput(value, type) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  if (type === 'start') {
+    date.setHours(0, 0, 0, 0)
+  } else if (type === 'end') {
+    date.setHours(23, 59, 59, 999)
+  }
+  return date.getTime()
+}
+
 watch(rowsRef, () => {
   currentPage.value = 1
 })
@@ -393,5 +457,17 @@ table thead th {
   width: 0.75rem;
   justify-content: center;
   margin-left: 0.25rem;
+}
+
+.date-range-filter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.date-range-separator {
+  font-size: 0.75rem;
+  color: #6c757d;
 }
 </style>

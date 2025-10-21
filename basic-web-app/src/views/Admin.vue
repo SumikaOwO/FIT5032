@@ -111,16 +111,15 @@ const actionWidth = widthForField(actionRows, 'action', { min: 12, max: 18 })
 const durationWidth = widthForField(actionRows, 'duration_sec', { min: 12, max: 16 })
 
 const actionColumns = [
-  { key: 'event_id', label: 'ID', sortable: true, searchable: true, width: idWidth, align: 'left', placeholder: 'Search ID' },
+  { key: 'event_id', label: 'ID', sortable: true, searchable: true, width: idWidth, align: 'left', placeholder: 'ID' },
   {
     key: 'timestampValue',
     label: 'Timestamp',
     sortable: true,
-    searchable: true,
-    placeholder: 'e.g. 2024.08.04 23:42',
+    filterType: 'daterange',
     width: timestampWidth,
     formatter: (_, row) => row.timestampFormatted,
-    filterAccessor: (row) => row.timestampFormatted
+    filterAccessor: (row) => row.timestampValue
   },
   { key: 'user_name', label: 'User', searchable: true, width: userWidth },
   { key: 'user_email', label: 'Email', searchable: true, width: emailWidth },
@@ -151,16 +150,15 @@ const incidentDeviceWidth = widthForField(incidentRows, 'device', { min: 18, max
 const incidentReporterWidth = widthForField(incidentRows, 'reported_by', { min: 20, max: 34 })
 
 const incidentColumns = [
-  { key: 'incident_id', label: 'ID', sortable: true, searchable: true, width: incidentIdWidth, align: 'left', placeholder: 'Search ID' },
+  { key: 'incident_id', label: 'ID', sortable: true, searchable: true, width: incidentIdWidth, align: 'left', placeholder: 'ID' },
   {
     key: 'timestampValue',
     label: 'Timestamp',
     sortable: true,
-    searchable: true,
-    placeholder: 'e.g. 2024.09.12 08:30',
+    filterType: 'daterange',
     width: incidentTimestampWidth,
     formatter: (_, row) => row.timestampFormatted,
-    filterAccessor: (row) => row.timestampFormatted
+    filterAccessor: (row) => row.timestampValue
   },
   { key: 'feature_name', label: 'Feature', filterType: 'select', options: incidentFeatures, sortable: false, width: incidentFeatureWidth },
   { key: 'severity_level', label: 'Severity', filterType: 'select', options: severityOptions, sortable: false, width: incidentSeverityWidth },
