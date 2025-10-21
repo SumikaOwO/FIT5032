@@ -2,7 +2,7 @@
   <section class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
     <div class="text-center">
       <h2>Welcome to U Health</h2>
-      <p class="text-muted">Let me help you to build a balance diet</p>
+      <p class="text-muted">Let me help you be healthier</p>
     </div>
   </section>
 </template>
