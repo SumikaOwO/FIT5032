@@ -13,12 +13,8 @@
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><router-link class="nav-link" to="/">Home</router-link></li>
           <li class="nav-item"><router-link class="nav-link" to="/resources">Resources</router-link></li>
-
           <li class="nav-item"><router-link class="nav-link" to="/tools">Tools</router-link></li>
-
-          <li class="nav-item"><router-link class="nav-link" to="/about">About</router-link></li>
           <li class="nav-item"><router-link class="nav-link" to="/findRecipe">Find Recipe</router-link></li>
-
           <li class="nav-item" v-if="!isAuthed">
             <router-link class="nav-link" :to="{ name: 'Login', query: { redirect: route.fullPath } }">Login</router-link>
           </li>

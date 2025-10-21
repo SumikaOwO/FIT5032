@@ -6,6 +6,13 @@ const tools = [
     desc: 'Estimate BMR and daily maintenance calories.',
     route: '/calculator',
     alt: 'Calorie calculator illustration'
+  },
+  {
+    key: 'healthy-places',
+    title: 'Healthy Places Explorer',
+    desc: 'Discover healthy spots nearby and plan your route.',
+    route: '/healthyPlaces',
+    alt: 'Healthy locations map illustration'
   }
 ]
 </script>
@@ -16,7 +23,7 @@ const tools = [
       <header class="row mb-4">
         <div class="col-12 col-md-10 col-lg-8 col-xxl-7 mx-auto">
           <h1 class="mb-2">Tools</h1>
-          <p class="text-muted mb-0">Quick calculator for everyday calorie intake.</p>
+          <!-- <p class="text-muted mb-0">Quick calculator for everyday calorie intake.</p> -->
         </div>
       </header>
 
